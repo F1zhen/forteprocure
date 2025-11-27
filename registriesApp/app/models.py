@@ -20,6 +20,9 @@ class RegistryEntry(Base):
     # Unique identifier from the source (bin, iin, or id)
     external_id = Column(String, nullable=True)
     
+    # Unified description of goods, software functions, or qualification categories
+    specialty_description = Column(String, nullable=True)
+    
     # Store the complete original JSON response for reference
     raw_data = Column(JSON)
     

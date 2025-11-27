@@ -63,6 +63,7 @@ async def sync_all_registries(db: Session):
                     last_name=item.get("lastName"),
                     middle_name=item.get("middleName"),
                     general_name=item.get("nameRu"),
+                    specialty_description=item.get("manufacturedGoods"),
                     external_id=item.get("identifier"),
                     raw_data=item
                 )
@@ -84,6 +85,7 @@ async def sync_all_registries(db: Session):
                     last_name=item.get("lastName"),
                     middle_name=item.get("middleName"),
                     general_name=item.get("nameRu"),
+                    specialty_description=None,
                     external_id=item.get("identifier"),
                     raw_data=item
                 )
@@ -103,8 +105,8 @@ async def sync_all_registries(db: Session):
                 entry = RegistryEntry(
                     source_registry="QUALIFIED_SUPPLIER",
                     # Qualified API often returns companies, so First/Last might be missing in JSON
-                    # We map the company name to general_name
                     general_name=supplier.get("nameRu"),
+                    specialty_description=item.get("categoryName"),
                     external_id=supplier.get("bin"),
                     raw_data=item
                 )
@@ -123,6 +125,7 @@ async def sync_all_registries(db: Session):
                     source_registry="ACCREDITED_SOFTWARE",
                     # Software API has 'applicantNameRu'
                     general_name=item.get("applicantNameRu"),
+                    specialty_description=item.get("descriptionRu"),
                     external_id=item.get("applicantIINorBin"),
                     raw_data=item
                 )

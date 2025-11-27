@@ -8,6 +8,7 @@ class RegistryEntryResponse(BaseModel):
     last_name: Optional[str] = None
     middle_name: Optional[str] = None
     general_name: Optional[str] = None
+    specialty_description: Optional[str] = None
     raw_data: Dict[str, Any]
 
     class Config:
