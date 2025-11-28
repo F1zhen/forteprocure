@@ -11,7 +11,7 @@ import google.generativeai as genai
 import pdfplumber
 from docx import Document
 
-# ================== ИНИЦИАЛИЗАЦИЯ ==================
+#ИНИЦИАЛИЗАЦИЯ
 
 load_dotenv()
 API_KEY = os.environ.get("GEMINI_API_KEY")
@@ -29,13 +29,23 @@ app = FastAPI(
 )
 
 
-# ================== МОДЕЛИ ОТВЕТА ==================
+#МОДЕЛИ ОТВЕТА
 
 class AnalyzeTenderResponse(BaseModel):
     result: Dict[str, Any]
 
 
-# ================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==================
+#МОДЕЛИ ДЛЯ AI-ЧАТА
+class TenderChatRequest(BaseModel):
+    analysis: Dict[str, Any]  # JSON из /analyze-tender
+    question: str              # вопрос пользователя
+
+
+class TenderChatResponse(BaseModel):
+    answer: str
+
+
+#ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИ
 
 def extract_text_from_pdf_bytes(data: bytes) -> str:
     text_parts = []
@@ -164,7 +174,62 @@ def call_gemini(doc_text: str) -> Dict[str, Any]:
     return data
 
 
-# ================== ENDPOINT ==================
+#ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ AI-ЧАТА
+
+def build_chat_prompt(analysis: Dict[str, Any], question: str) -> str:
+    """
+    Строим промпт для чат-ассистента на основе уже готового анализа тендера.
+    analysis — это JSON из /analyze-tender.
+    """
+    analysis_json = json.dumps(analysis, ensure_ascii=False, indent=2)
+
+    return f"""
+Ты — AI-Procure, встроенный AI-ассистент по госзакупкам.
+
+Тебе передан структурированный анализ тендера в формате JSON (ANALYSIS_JSON).
+Пользователь задаёт вопрос о тендере. Отвечай, опираясь ТОЛЬКО на этот анализ.
+Если информации в анализе нет — честно скажи, что в данных это не указано.
+
+Типичные задачи пользователя:
+- выделить самые критичные требования;
+- сделать таблицу технических характеристик;
+- объяснить риски и узкие места;
+- подсказать, стоит ли участвовать в тендере с точки зрения условий;
+- сравнить ТЗ с его продуктом, если он кратко описан в вопросе.
+
+Требования к ответу:
+- Отвечай на русском языке;
+- Пиши структурировано (списки, подпункты, таблицы в Markdown, если уместно);
+- Не используй формулировки вроде "как ИИ-модель";
+- Не придумывай факты, которых нет в ANALYSIS_JSON.
+
+=== ANALYSIS_JSON (анализ тендера) ===
+{analysis_json}
+=== КОНЕЦ ANALYSIS_JSON ===
+
+=== ВОПРОС ПОЛЬЗОВАТЕЛЯ ===
+{question}
+=== КОНЕЦ ВОПРОСА ===
+
+Сформируй полезный, прикладной ответ для пользователя.
+"""
+
+
+def call_gemini_chat(analysis: Dict[str, Any], question: str) -> str:
+    """
+    Вызов Gemini как чат-ассистента по уже проанализированному тендеру.
+    """
+    model = genai.GenerativeModel(
+        model_name=MODEL_NAME,
+        # здесь можно оставить обычный text/plain вывод
+    )
+
+    prompt = build_chat_prompt(analysis, question)
+    response = model.generate_content(prompt)
+    return response.text
+
+
+#ENDPOINT АНАЛИЗА
 
 @app.post("/analyze-tender", response_model=AnalyzeTenderResponse)
 async def analyze_tender(file: UploadFile = File(...)):
@@ -192,3 +257,28 @@ async def analyze_tender(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
     return AnalyzeTenderResponse(result=result)
+
+
+#ENDPOINT AI-ЧАТА
+
+@app.post("/chat-tender", response_model=TenderChatResponse)
+async def chat_tender(payload: TenderChatRequest):
+    """
+    AI-чат по уже проанализированному тендеру.
+
+    Ожидает:
+    {
+      "analysis": { ... JSON из /analyze-tender ... },
+      "question": "Ваш вопрос"
+    }
+
+    Возвращает:
+    {
+      "answer": "Текст ответа ассистента"
+    }
+    """
+    try:
+        answer = call_gemini_chat(payload.analysis, payload.question)
+        return TenderChatResponse(answer=answer)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ошибка AI-ассистента: {e}")
