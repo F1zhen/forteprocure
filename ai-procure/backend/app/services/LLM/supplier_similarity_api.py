@@ -1,26 +1,18 @@
 import os
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-
+from dotenv import load_dotenv
 from supabase import create_client, Client
 import google.generativeai as genai
 
-
 # CONFIG
+load_dotenv()
+API_KEY = os.environ.get("GEMINI_API_KEY")
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-
-if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
-    raise RuntimeError("Supabase env переменные не найдены")
-
-if not GEMINI_API_KEY:
-    raise RuntimeError("GEMINI_API_KEY не найден")
-
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-genai.configure(api_key=GEMINI_API_KEY)
-
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+genai.configure(api_key=API_KEY)
 
 # FASTAPI
 app = FastAPI(
@@ -28,12 +20,15 @@ app = FastAPI(
     version="1.0"
 )
 
+# ===== EMBEDDINGS =====
 
-# EMBED TEXT
-def embed_text(text: str):
-    model = genai.GenerativeModel("text-embedding-004")
-    emb = model.embed_content(text)
-    return emb["embedding"]
+def embed_text(text: str) -> list[float]:
+    # ВАЖНО: модель указывается как "models/..."
+    res = genai.embed_content(
+        model="models/text-embedding-004",
+        content=text,
+    )
+    return res["embedding"]
 
 
 # REQUEST MODEL
@@ -42,25 +37,27 @@ class SupplierQuery(BaseModel):
     top_k: int = 5
 
 
-# API ENDPOINT
+# API ENDPOINT: ПОХОЖИЕ ПОСТАВЩИКИ
 @app.post("/api/suppliers/similar")
 async def find_similar_suppliers(payload: SupplierQuery):
     try:
         query_embedding = embed_text(payload.text)
 
-        resp = supabase.post(
-            "/rest/v1/rpc/similar_suppliers",
+        resp = supabase.rpc(
+            "similar_suppliers",   # имя функции в Postgres
             {
                 "query_embedding": query_embedding,
-                "limit_num": payload.top_k
+                "limit_num": payload.top_k,
             }
-        )
+        ).execute()
 
         return {"results": resp.data}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+# ===== SIMILAR TENDERS (по tender_id) =====
 
 class SimilarTendersRequest(BaseModel):
     tender_id: int
@@ -80,7 +77,6 @@ class SimilarTendersResponse(BaseModel):
 
 
 def embed_tender_for_query(tender: dict) -> list[float]:
-    # берём то же представление, что и в offline-скрипте
     text = f"""
 Номер объявления: {tender.get("announce_number")}
 Название: {tender.get("name")}
@@ -88,9 +84,7 @@ def embed_tender_for_query(tender: dict) -> list[float]:
 Сумма: {tender.get("total_sum")}
 ML-анализ: {tender.get("ml_analysis_text") or ""}
 """
-    model = genai.GenerativeModel("text-embedding-004")
-    emb = model.embed_content(text)
-    return emb["embedding"]
+    return embed_text(text)
 
 
 @app.post("/similar-tenders", response_model=SimilarTendersResponse)
@@ -106,13 +100,13 @@ async def get_similar_tenders(payload: SimilarTendersRequest):
     query_embedding = embed_tender_for_query(tender)
 
     # 3. зовём Postgres-функцию similar_tenders
-    rpc_res = supabase.post(
-        "/rest/v1/rpc/similar_tenders",
+    rpc_res = supabase.rpc(
+        "similar_tenders",
         {
             "query_embedding": query_embedding,
-            "limit_num": payload.top_k
+            "limit_num": payload.top_k,
         }
-    )
+    ).execute()
 
     items = [
         SimilarTenderItem(
@@ -123,11 +117,42 @@ async def get_similar_tenders(payload: SimilarTendersRequest):
             distance=float(it["distance"]),
         )
         for it in rpc_res.data
-        if it["tender_id"] != payload.tender_id  # можно исключить сам себя
+        if it["tender_id"] != payload.tender_id  # исключаем сам себя
     ]
 
     return SimilarTendersResponse(items=items)
 
 
+# ===== SIMILAR TENDERS (по тексту из поиска) =====
+
+class SimilarTendersTextRequest(BaseModel):
+    query: str
+    top_k: int = 5
 
 
+@app.post("/similar-tenders-by-text", response_model=SimilarTendersResponse)
+async def get_similar_tenders_by_text(payload: SimilarTendersTextRequest):
+    # 1. embed текста, который ввёл юзер в search bar
+    query_embedding = embed_text(payload.query)
+
+    # 2. запрос к той же функции similar_tenders
+    rpc_res = supabase.rpc(
+        "similar_tenders",
+        {
+            "query_embedding": query_embedding,
+            "limit_num": payload.top_k,
+        }
+    ).execute()
+
+    items = [
+        SimilarTenderItem(
+            tender_id=it["tender_id"],
+            announce_number=it["announce_number"],
+            name=it["name"],
+            total_sum=float(it["total_sum"] or 0),
+            distance=float(it["distance"]),
+        )
+        for it in rpc_res.data
+    ]
+
+    return SimilarTendersResponse(items=items)
