@@ -62,8 +62,72 @@ async def find_similar_suppliers(payload: SupplierQuery):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class SimilarTendersRequest(BaseModel):
+    tender_id: int
+    top_k: int = 5
 
-# RUN
 
-if __name__ == "__main__":
+class SimilarTenderItem(BaseModel):
+    tender_id: int
+    announce_number: str
+    name: str
+    total_sum: float
+    distance: float
+
+
+class SimilarTendersResponse(BaseModel):
+    items: list[SimilarTenderItem]
+
+
+def embed_tender_for_query(tender: dict) -> list[float]:
+    # берём то же представление, что и в offline-скрипте
+    text = f"""
+Номер объявления: {tender.get("announce_number")}
+Название: {tender.get("name")}
+Заказчик: {tender.get("organizer_name")}
+Сумма: {tender.get("total_sum")}
+ML-анализ: {tender.get("ml_analysis_text") or ""}
+"""
+    model = genai.GenerativeModel("text-embedding-004")
+    emb = model.embed_content(text)
+    return emb["embedding"]
+
+
+@app.post("/similar-tenders", response_model=SimilarTendersResponse)
+async def get_similar_tenders(payload: SimilarTendersRequest):
+    # 1. достаём тендер из БД
+    res = supabase.table("tenders").select("*").eq("id", payload.tender_id).execute()
+    if not res.data:
+        raise HTTPException(404, "Тендер не найден")
+
+    tender = res.data[0]
+
+    # 2. считаем embedding для этого тендера
+    query_embedding = embed_tender_for_query(tender)
+
+    # 3. зовём Postgres-функцию similar_tenders
+    rpc_res = supabase.post(
+        "/rest/v1/rpc/similar_tenders",
+        {
+            "query_embedding": query_embedding,
+            "limit_num": payload.top_k
+        }
+    )
+
+    items = [
+        SimilarTenderItem(
+            tender_id=it["tender_id"],
+            announce_number=it["announce_number"],
+            name=it["name"],
+            total_sum=float(it["total_sum"] or 0),
+            distance=float(it["distance"]),
+        )
+        for it in rpc_res.data
+        if it["tender_id"] != payload.tender_id  # можно исключить сам себя
+    ]
+
+    return SimilarTendersResponse(items=items)
+
+
+
 

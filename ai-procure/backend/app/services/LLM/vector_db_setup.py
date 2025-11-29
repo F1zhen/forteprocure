@@ -1,20 +1,16 @@
 import os
+from dotenv import load_dotenv
 from supabase import create_client, Client
 import google.generativeai as genai
 
-# CONFIG
+load_dotenv()
+
 SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")  
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
-    raise RuntimeError("Supabase env переменные не найдены")
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-if not GEMINI_API_KEY:
-    raise RuntimeError("GEMINI_API_KEY не найден")
-
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-genai.configure(api_key=GEMINI_API_KEY)
 
 
 
@@ -26,14 +22,14 @@ def init_vector_schema():
 
     create table if not exists supplier_embeddings (
       id bigserial primary key,
-      supplier_id bigint references suppliers(id) on delete cascade,
+      supplier_id bigint references registry_entries(id) on delete cascade,
       text_to_embed text,
-      embedding vector(1536),
+      embedding vector(768),
       created_at timestamp default now()
     );
 
     create or replace function similar_suppliers(
-      query_embedding vector(1536),
+      query_embedding vector(768),
       limit_num int
     )
     returns table(
@@ -45,20 +41,20 @@ def init_vector_schema():
     )
     language sql stable
     as $$
-      select s.id as supplier_id,
-             s.name,
-             s.activity_description,
-             s.is_blacklisted,
-             (e.embedding <=> query_embedding) as distance
+      select 
+          r.id as supplier_id,
+          r.general_name as name,
+          r.specialty_description as activity_description,
+          (r.source_registry = 'UNTRUSTWORTHY_SUPPLIER') as is_blacklisted,
+          (e.embedding <=> query_embedding) as distance
       from supplier_embeddings e
-      join suppliers s on s.id = e.supplier_id
+      join registry_entries r on r.id = e.supplier_id
       order by e.embedding <=> query_embedding
-      limit limit_num
+      limit limit_num;
     $$;
     """
 
     return supabase.post("/rest/v1/rpc/exec_sql", {"sql": sql})
-
 
 
 # EMBEDDING GENERATOR
@@ -101,16 +97,16 @@ def embed_all_suppliers():
         embedding = embed_text(text)
 
         save_embedding(supplier_id, text, embedding)
-        print(f"✓ Embedding создан: supplier_id={supplier_id}")
+        print(f"Embedding создан: supplier_id={supplier_id}")
 
 
 # MAIN
 if __name__ == "__main__":
-    print("→ Создание схемы vector DB...")
+    print("Создание схемы vector DB...")
     out = init_vector_schema()
     print(out)
 
-    print("→ Генерация embedding для всех suppliers...")
+    print("Генерация embedding для всех suppliers...")
     embed_all_suppliers()
 
-    print("✓ Готово!")
+    print("Готово!")
