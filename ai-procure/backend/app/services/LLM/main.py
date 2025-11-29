@@ -1,9 +1,9 @@
 import os
 import io
 import json
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Query
 from pydantic import BaseModel
 
 from dotenv import load_dotenv
@@ -11,16 +11,32 @@ import google.generativeai as genai
 import pdfplumber
 from docx import Document
 
-#ИНИЦИАЛИЗАЦИЯ
+from supabase import create_client, Client
+
+import time
+import uuid
+
+def generate_announce_number() -> str:
+    # Можно как угодно, главное — не NULL
+    return f"AI-{int(time.time())}-{uuid.uuid4().hex[:6]}"
+
+#НИЦИАЛИЗАЦИЯ
 
 load_dotenv()
 API_KEY = os.environ.get("GEMINI_API_KEY")
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")  # можно anon или service_role
 
 if not API_KEY:
     raise RuntimeError("GEMINI_API_KEY не найден в .env или переменных окружения")
 
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise RuntimeError("SUPABASE_URL или SUPABASE_KEY не найдены в .env")
+
 genai.configure(api_key=API_KEY)
 MODEL_NAME = "gemini-2.5-flash"
+
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = FastAPI(
     title="AI-Procure API",
@@ -29,16 +45,17 @@ app = FastAPI(
 )
 
 
-#МОДЕЛИ ОТВЕТА
-
+#МОДЕЛИ ОТВЕТ
 class AnalyzeTenderResponse(BaseModel):
+    tender_id: int
     result: Dict[str, Any]
 
 
-#МОДЕЛИ ДЛЯ AI-ЧАТА
+#МОДЕЛИ ДЛЯ AI-ЧАТ
+
 class TenderChatRequest(BaseModel):
     analysis: Dict[str, Any]  # JSON из /analyze-tender
-    question: str              # вопрос пользователя
+    question: str             # вопрос пользователя
 
 
 class TenderChatResponse(BaseModel):
@@ -174,13 +191,91 @@ def call_gemini(doc_text: str) -> Dict[str, Any]:
     return data
 
 
+#RISK SCORE И СОХРАНЕНИЕ В БД
+
+def compute_risk_score(analysis: Dict[str, Any]) -> float:
+    """
+    Простейшая эвристика:
+    берем максимальный severity из risk_analysis и нормируем до 0–1.
+    Если ничего нет — 0.0.
+    """
+    risks = analysis.get("risk_analysis") or []
+    if not isinstance(risks, list) or not risks:
+        return 0.0
+
+    severities = []
+    for r in risks:
+        try:
+            severities.append(float(r.get("severity", 0)))
+        except Exception:
+            continue
+
+    if not severities:
+        return 0.0
+
+    max_sev = max(severities)
+    # ожидаем, что severity 0–100
+    return max(0.0, min(max_sev / 100.0, 1.0))
+
+
+def parse_budget_to_float(budget_str: str) -> float:
+    if not budget_str:
+        return 0.0
+    import re
+    clean = re.sub(r"[^\d.,]", "", budget_str.replace(" ", ""))
+    clean = clean.replace(",", ".")
+    parts = clean.split(".")
+    if len(parts) > 2:
+        clean = "".join(parts[:-1]) + "." + parts[-1]
+    try:
+        return float(clean)
+    except:
+        return 0.0
+
+
+def save_analysis_to_db(tender_id: Optional[int], analysis: Dict[str, Any]) -> int:
+    key = analysis.get("key_fields", {}) or {}
+
+    announce_number = key.get("announce_number") or key.get("tender_number")
+    if not announce_number:
+        announce_number = generate_announce_number()
+
+    base_data = {
+        "announce_number": announce_number,              # 🔴 ДОБАВИЛИ
+        "name": key.get("title", ""),
+        "organizer_name": key.get("customer", ""),
+        "total_sum": parse_budget_to_float(key.get("budget", "")),
+        "risk_score": compute_risk_score(analysis),
+        "ml_analysis_text": json.dumps(analysis, ensure_ascii=False),
+        "is_analyzed": True,
+    }
+
+    if tender_id is None:
+        res = supabase.table("tenders").insert(base_data).execute()
+        if not res.data:
+            raise HTTPException(500, "Не удалось создать новый тендер")
+        return res.data[0]["id"]
+
+    res_update = (
+        supabase.table("tenders")
+        .update(base_data)
+        .eq("id", tender_id)
+        .execute()
+    )
+
+    if res_update.data:
+        return tender_id
+
+    res_insert = supabase.table("tenders").insert(base_data).execute()
+    if not res_insert.data:
+        raise HTTPException(500, "Не удалось создать тендер (fallback)")
+
+    return res_insert.data[0]["id"]
+
+
 #ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ AI-ЧАТА
 
 def build_chat_prompt(analysis: Dict[str, Any], question: str) -> str:
-    """
-    Строим промпт для чат-ассистента на основе уже готового анализа тендера.
-    analysis — это JSON из /analyze-tender.
-    """
     analysis_json = json.dumps(analysis, ensure_ascii=False, indent=2)
 
     return f"""
@@ -216,14 +311,7 @@ def build_chat_prompt(analysis: Dict[str, Any], question: str) -> str:
 
 
 def call_gemini_chat(analysis: Dict[str, Any], question: str) -> str:
-    """
-    Вызов Gemini как чат-ассистента по уже проанализированному тендеру.
-    """
-    model = genai.GenerativeModel(
-        model_name=MODEL_NAME,
-        # здесь можно оставить обычный text/plain вывод
-    )
-
+    model = genai.GenerativeModel(model_name=MODEL_NAME)
     prompt = build_chat_prompt(analysis, question)
     response = model.generate_content(prompt)
     return response.text
@@ -232,10 +320,14 @@ def call_gemini_chat(analysis: Dict[str, Any], question: str) -> str:
 #ENDPOINT АНАЛИЗА
 
 @app.post("/analyze-tender", response_model=AnalyzeTenderResponse)
-async def analyze_tender(file: UploadFile = File(...)):
-    """
-    Принимает PDF/DOCX файл тендера и возвращает структурированный JSON-анализ.
-    """
+async def analyze_tender(
+    file: UploadFile = File(...),
+    tender_id: Optional[int] = Query(
+        default=None,
+        description="ID тендера в БД (если хотим привязать анализ к существующему). "
+                    "Если не указан — будет создан новый тендер.",
+    ),
+):
     try:
         text = extract_text_from_upload(file)
     except ValueError as e:
@@ -248,18 +340,24 @@ async def analyze_tender(file: UploadFile = File(...)):
 
     try:
         result = call_gemini(text)
+
+        # 💾 сохраняем в БД (создаём новый или обновляем существующий)
+        saved_tender_id = save_analysis_to_db(tender_id, result)
+
     except json.JSONDecodeError:
         raise HTTPException(
             status_code=502,
             detail="LLM вернул невалидный JSON. Проверьте промпт или логи сервера.",
         )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    return AnalyzeTenderResponse(result=result)
+    return AnalyzeTenderResponse(tender_id=saved_tender_id, result=result)
 
 
-#ENDPOINT AI-ЧАТА
+#ENDPOINT AI-ЧАТ
 
 @app.post("/chat-tender", response_model=TenderChatResponse)
 async def chat_tender(payload: TenderChatRequest):
