@@ -9,14 +9,18 @@ from fastapi import Query
 import re
 import traceback
 import logging
-
+from dotenv import load_dotenv
+import os
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # --- КОНФИГУРАЦИЯ ---
-SUPABASE_URL = "https://kjzhgaaljazarxjtofyl.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqemhnYWFsamF6YXJ4anRvZnlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQyNjM4OTcsImV4cCI6MjA3OTgzOTg5N30.GXHJpoxe7bUccMgVg-ETD4F_3tvLqgl3cTi_MNEnag0"  # ЗАМЕНИТЕ НА РЕАЛЬНЫЙ КЛЮЧ
+load_dotenv()
+load_dotenv()
+API_KEY = os.environ.get("GEMINI_API_KEY")
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = FastAPI()
