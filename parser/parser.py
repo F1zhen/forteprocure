@@ -10,14 +10,16 @@ import re
 import traceback
 import logging
 from dotenv import load_dotenv
-
+import os
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # --- КОНФИГУРАЦИЯ ---
 load_dotenv()
-supabase: Client = create_client("SUPABASE_URL", "SUPABASE_KEY")
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")  # service_role required
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
 app = FastAPI()
 
