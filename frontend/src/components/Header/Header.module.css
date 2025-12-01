@@ -1,0 +1,42 @@
+.header {
+  padding: 30px 0;
+  border-bottom: 1px solid #E5E5E5;
+  background: #FFFFFF;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logoIcon {
+  width: 48px;
+  height: 48px;
+  background: #BF3D61;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+}
+
+.logoText h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #BF3D61;
+  margin: 0;
+}
+
+.logoText p {
+  font-size: 14px;
+  color: #666;
+  margin: 2px 0 0 0;
+}

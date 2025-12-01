@@ -323,6 +323,54 @@ async def scrape_full(request: ScrapeRequest):
         logger.error(traceback.format_exc())
         raise HTTPException(500, detail=f"Внутренняя ошибка: {str(e)}")
 
+@app.get("/api/tenders/search")
+async def search_tenders(
+    query: str = Query("", description="Поисковый запрос"),
+    limit: int = Query(20, ge=1, le=100)
+):
+    """
+    Поиск тендеров по названию или номеру объявления
+    """
+    try:
+        # Handle empty query
+        if not query or len(query) < 3:
+            result = supabase.table("tenders") \
+                .select("*") \
+                .order("created_at", desc=True) \
+                .limit(limit) \
+                .execute()
+
+            return {
+                "results": result.data,
+                "count": len(result.data)
+            }
+
+        # Search by name
+        name_results = supabase.table("tenders") \
+            .select("*") \
+            .ilike("name", f"%{query}%") \
+            .limit(limit) \
+            .execute()
+
+        # Search by number
+        number_results = supabase.table("tenders") \
+            .select("*") \
+            .ilike("announce_number", f"%{query}%") \
+            .limit(limit) \
+            .execute()
+
+        # Combine and deduplicate
+        all_results = name_results.data + number_results.data
+        unique_results = {t['id']: t for t in all_results}.values()
+
+        return {
+            "results": list(unique_results),
+            "count": len(unique_results)
+        }
+
+    except Exception as e:
+        logger.error(f"Ошибка при поиске: {e}")
+        raise HTTPException(500, detail=str(e))
 
 # --- ENDPOINT ДЛЯ ПОЛУЧЕНИЯ ДАННЫХ (для ML) ---
 @app.get("/api/tenders/{tender_id}")
@@ -687,47 +735,6 @@ async def get_statistics():
         logger.error(f"Ошибка при получении статистики: {e}")
         raise HTTPException(500, detail=str(e))
 
-
-# ==================== ПОИСК ====================
-
-@app.get("/api/tenders/search")
-async def search_tenders(
-        query: str = Query(..., min_length=3, description="Поисковый запрос"),
-        limit: int = Query(20, ge=1, le=100)
-):
-    """
-    Поиск тендеров по названию или номеру объявления
-
-    Пример запроса:
-    GET http://127.0.0.1:8000/api/tenders/search?query=строительство
-    """
-    try:
-        # Поиск по названию
-        name_results = supabase.table("tenders") \
-            .select("*") \
-            .ilike("name", f"%{query}%") \
-            .limit(limit) \
-            .execute()
-
-        # Поиск по номеру объявления
-        number_results = supabase.table("tenders") \
-            .select("*") \
-            .ilike("announce_number", f"%{query}%") \
-            .limit(limit) \
-            .execute()
-
-        # Объединяем результаты (убираем дубликаты)
-        all_results = name_results.data + number_results.data
-        unique_results = {t['id']: t for t in all_results}.values()
-
-        return {
-            "results": list(unique_results),
-            "count": len(unique_results)
-        }
-
-    except Exception as e:
-        logger.error(f"Ошибка при поиске: {e}")
-        raise HTTPException(500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn

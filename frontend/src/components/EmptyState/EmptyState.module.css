@@ -1,0 +1,139 @@
+.emptyState {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  padding: 20px 0;
+}
+
+.card {
+  text-align: center;
+  padding: 60px 40px;
+  background: #F9FAFB;
+  border-radius: 12px;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.icon {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 24px;
+  background: rgba(191, 61, 97, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  color: #BF3D61;
+}
+
+.text {
+  font-size: 16px;
+  color: #666;
+  line-height: 1.6;
+  max-width: 300px;
+}
+
+.loadingState {
+  background: #F9FAFB;
+  border-radius: 12px;
+  padding: 60px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  min-height: 300px;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #BF3D61;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loadingText {
+  font-size: 16px;
+  color: #666;
+  font-weight: 500;
+}
+
+.resultsContainer {
+  background: #F9FAFB;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.resultsHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #BF3D61;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.resultsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.resultsGrid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.resultsGrid::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.resultsGrid::-webkit-scrollbar-thumb {
+  background: #BF3D61;
+  border-radius: 3px;
+}
+
+.analysisContainer {
+  background: #F9FAFB;
+  border-radius: 12px;
+  padding: 24px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.analysisContainer::-webkit-scrollbar {
+  width: 6px;
+}
+
+.analysisContainer::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.analysisContainer::-webkit-scrollbar-thumb {
+  background: #BF3D61;
+  border-radius: 3px;
+}
+
+@media (max-width: 1024px) {
+  .emptyState {
+    grid-template-columns: 1fr;
+  }
+}
