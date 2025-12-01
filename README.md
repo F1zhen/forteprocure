@@ -1,13 +1,13 @@
 # Forte Procure AI  
 **Intelligent Tender Analysis & Risk Detection Platform**
 
-<img width="1900" height="1028" alt="image" src="https://github.com/user-attachments/assets/aa4951ef-9dd2-4928-bcbd-6a8739388319" />
+<img width="1899" height="1030" alt="image" src="https://github.com/user-attachments/assets/6188a617-3686-4cdf-9d0e-8f3852c119bb" />
 *AI-powered procurement intelligence for transparency and compliance*
 
 ---
 
 ### The purpose
-Automatically parses tender documents, extracts key terms, detects risks, finds similar tenders, and matches qualified suppliers — in seconds.
+Automatically parses tender documents, extracts key terms, detects risks, finds similar tenders, and matches qualified suppliers - everything in one place, in seconds.
 
 ---
 
@@ -33,16 +33,37 @@ Automatically parses tender documents, extracts key terms, detects risks, finds 
 
 ---
 
-### Key features
+### App interface
 
 ## Search by keyword
 
 <img width="1543" height="928" alt="image" src="https://github.com/user-attachments/assets/5338fcd8-a50c-4635-897f-d8caafd6e20a" />
 
+Use keywords to find companies in the procurement register 
+
 ## Matching Suppliers
 
 <img width="1468" height="500" alt="image" src="https://github.com/user-attachments/assets/1bb50094-701e-4b3f-9e4d-b0b4f2c74b53" />
 
+Find similar companies to one you're viewing. This feature automatically suggests other suppliers that match your selected company by various criteria.
+
+<img width="1751" height="708" alt="image" src="https://github.com/user-attachments/assets/018fe994-c9e6-4f36-bbee-e5b9a0feb939" />
+
 ## Search by BIN in the Kazakhstani register of unscrupulous participants in public procurement
 
 <img width="1500" height="501" alt="image" src="https://github.com/user-attachments/assets/e1506dea-fdb2-492a-8721-901fcbf5d7d4" />
+
+The application provides an interface for searching information about companies and entrepreneurs in Kazakhstan's official register of unscrupulous participants in public procurement. Users can query by Business Identification Number (BIN) to retrieve details about entities that have violated procurement regulations.
+
+<img width="1510" height="528" alt="image" src="https://github.com/user-attachments/assets/bff26b7e-1cc4-4bf3-bd11-fc9221ecd689" />
+
+
+### Contact us
+
+@F1zhen - ML
+
+@batyr_sk - Frontend
+
+@b5aaaaa - Backend
+
+@x_ae_yedil - Backend
