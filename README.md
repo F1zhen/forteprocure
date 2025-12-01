@@ -1,4 +1,4 @@
-# Forte Procure AI  
+# ForteProcure AI  
 **Intelligent Tender Analysis & Risk Detection Platform**
 
 <img width="1899" height="1030" alt="image" src="https://github.com/user-attachments/assets/6188a617-3686-4cdf-9d0e-8f3852c119bb" />
@@ -7,7 +7,7 @@
 ---
 
 ### The purpose
-Automatically parses tender documents, extracts key terms, detects risks, finds similar tenders, and matches qualified suppliers - everything in one place, in seconds.
+> Automatically parses tender documents, extracts key terms, detects risks, finds similar tenders, and matches qualified suppliers - everything in one place, in seconds.
 
 ---
 
@@ -39,13 +39,15 @@ Automatically parses tender documents, extracts key terms, detects risks, finds 
 
 <img width="1543" height="928" alt="image" src="https://github.com/user-attachments/assets/5338fcd8-a50c-4635-897f-d8caafd6e20a" />
 
-Use keywords to find companies in the procurement register 
+> Use keywords to find companies in the procurement register 
 
 ## Matching Suppliers
 
 <img width="1468" height="500" alt="image" src="https://github.com/user-attachments/assets/1bb50094-701e-4b3f-9e4d-b0b4f2c74b53" />
 
-Find similar companies to one you're viewing. This feature automatically suggests other suppliers that match your selected company by various criteria.
+> Find similar companies to one you're viewing. This feature automatically suggests other suppliers that match your selected company by various criteria.
+
+#### Swagger
 
 <img width="1751" height="708" alt="image" src="https://github.com/user-attachments/assets/018fe994-c9e6-4f36-bbee-e5b9a0feb939" />
 
@@ -53,12 +55,21 @@ Find similar companies to one you're viewing. This feature automatically suggest
 
 <img width="1500" height="501" alt="image" src="https://github.com/user-attachments/assets/e1506dea-fdb2-492a-8721-901fcbf5d7d4" />
 
-The application provides an interface for searching information about companies and entrepreneurs in Kazakhstan's official register of unscrupulous participants in public procurement. Users can query by Business Identification Number (BIN) to retrieve details about entities that have violated procurement regulations.
+> The application provides an interface for searching information about companies and entrepreneurs in Kazakhstan's official register of unscrupulous participants in public procurement. Users can query by Business Identification Number (BIN) to retrieve details about entities that have violated procurement regulations.
+
+#### Swagger
 
 <img width="1510" height="528" alt="image" src="https://github.com/user-attachments/assets/bff26b7e-1cc4-4bf3-bd11-fc9221ecd689" />
 
+## AI Assistant
+
+<img width="670" height="670" alt="image" src="https://github.com/user-attachments/assets/4ee76c95-b959-441a-a389-1b39fd47d78f" />
+
+> Users can easily interact with the AI assistant according the analyzed tender: it can help in case the person wants to clarify points about tender, deeper understand specific terms, conditions 
 
 ### Contact us
+
+---
 
 @F1zhen - ML
 
