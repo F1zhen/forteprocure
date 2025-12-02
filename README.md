@@ -53,7 +53,7 @@
 
 ## Search by BIN in the Kazakhstani register of unscrupulous participants in public procurement
 
-<img width="1500" height="501" alt="image" src="https://github.com/user-attachments/assets/e1506dea-fdb2-492a-8721-901fcbf5d7d4" />
+<img width="1294" height="476" alt="image" src="https://github.com/user-attachments/assets/c7bbc6bb-4e6b-4252-9425-5fcc0c63a059" />
 
 > The application provides an interface for searching information about companies and entrepreneurs in Kazakhstan's official register of unscrupulous participants in public procurement. Users can query by Business Identification Number (BIN) to retrieve details about entities that have violated procurement regulations.
 
@@ -63,7 +63,7 @@
 
 ## AI Assistant
 
-<img width="1394" height="576" alt="image" src="https://github.com/user-attachments/assets/c7bbc6bb-4e6b-4252-9425-5fcc0c63a059" />
+<img width="565" height="572" alt="image" src="https://github.com/user-attachments/assets/1ea6fd4e-45c9-4a0f-931f-b75a9ba5a6ff" />
 
 > Users can easily interact with the AI assistant according the analyzed tender: it can help in case the person wants to clarify points about tender, deeper understand specific terms, conditions
 
