@@ -14,7 +14,6 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onUpload, isLoading }) =>
     const file = e.target.files?.[0];
     if (file) {
       onUpload(file);
-      // Reset input so same file can be uploaded again
       e.target.value = '';
     }
   };

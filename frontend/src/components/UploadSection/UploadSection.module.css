@@ -1,5 +1,5 @@
 .uploadSection {
-  background: rgba(255, 255, 255, 0.95);
+  background: #C34A61;
   border-radius: 12px;
   padding: 2rem;
   text-align: center;
@@ -14,7 +14,7 @@
 
 .uploadIcon {
   font-size: 3rem;
-  color: #BF3D61;
+  color: #FFFFFF;
   margin-bottom: 1rem;
 }
 
@@ -25,20 +25,20 @@
 .uploadTitle {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #333;
+  color: #FFFFFF;
   margin-bottom: 0.5rem;
 }
 
 .uploadSubtitle {
-  color: #666;
+  color: #FFFFFF;
   margin-bottom: 1.5rem;
 }
 
 .uploadButton {
-  background: #BF3D61;
-  color: white;
+  background: #FFFFFF;
+  color: #C34A61;
   border: none;
-  border-radius: 8px;
+  border-radius: 24px;
   padding: 0.75rem 2rem;
   font-size: 1rem;
   font-weight: 600;
@@ -47,8 +47,8 @@
 }
 
 .uploadButton:hover:not(:disabled) {
-  background: #a73555;
-  box-shadow: 0 4px 12px rgba(191, 61, 97, 0.4);
+  background: #FDEAF0;
+  box-shadow: 0 4px 12px rgba(191, 61, 97, 0.2);
 }
 
 .uploadButton:disabled {

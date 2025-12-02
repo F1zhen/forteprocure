@@ -4,6 +4,8 @@ __pycache__/
 *.pyd
 *.pyc
 .Python
+.env
 env/
+ForteBank.env
 venv/
 .venv/

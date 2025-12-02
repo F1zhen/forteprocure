@@ -91,8 +91,15 @@ def parse_tender_general(html_content: str, source_url: str):
                 except:
                     pass
 
-    return tender_data
+    if tender_data["publish_date"]:
+        try:
+            parsed_date = datetime.strptime(tender_data["publish_date"], "%Y-%m-%d")
+            if parsed_date.year < 2000:
+                tender_data["publish_date"] = None
+        except:
+            tender_data["publish_date"] = None
 
+    return tender_data
 
 def parse_tender_lots(html_content: str):
     """Парсинг лотов"""

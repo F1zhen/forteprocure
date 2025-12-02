@@ -25,9 +25,11 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   const renderLeftCard = () => {
     if (isSearching) {
       return (
-        <div className={styles.loadingState}>
-          <div className={styles.spinner}></div>
-          <div className={styles.loadingText}>Поиск тендеров...</div>
+        <div className={styles.card}>
+          <div className={styles.loadingState}>
+            <div className={styles.spinner}></div>
+            <div className={styles.loadingText}>Поиск тендеров...</div>
+          </div>
         </div>
       );
     }
@@ -67,10 +69,12 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   const renderRightCard = () => {
     if (isAnalyzing || isUploading) {
       return (
-        <div className={styles.loadingState}>
-          <div className={styles.spinner}></div>
-          <div className={styles.loadingText}>
-            {isUploading ? 'Анализируем документ...' : 'Анализируем тендер...'}
+        <div className={styles.card}>
+          <div className={styles.loadingState}>
+            <div className={styles.spinner}></div>
+            <div className={styles.loadingText}>
+              {isUploading ? 'Анализируем документ...' : 'Анализируем тендер...'}
+            </div>
           </div>
         </div>
       );
@@ -98,8 +102,12 @@ const EmptyState: React.FC<EmptyStateProps> = ({
 
   return (
     <div className={styles.emptyState}>
-      {renderLeftCard()}
-      {renderRightCard()}
+      <div className={styles.leftColumn}>
+        {renderLeftCard()}
+      </div>
+      <div className={styles.rightColumn}>
+        {renderRightCard()}
+      </div>
     </div>
   );
 };

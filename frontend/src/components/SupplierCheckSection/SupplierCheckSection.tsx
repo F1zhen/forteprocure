@@ -13,6 +13,11 @@ interface SupplierRiskData {
     middle_name?: string;
     external_id?: string;
     specialty_description?: string;
+    reason_code?: string;
+    reason_text?: string;
+    email_address?: string;
+    legal_address?: string;
+    register_type?: string;
   }>;
 }
 
@@ -39,7 +44,7 @@ const SupplierCheckSection: React.FC<SupplierCheckSectionProps> = ({ onCheck }) 
     try {
       const data = await onCheck(bin.trim());
       setResult(data);
-    } catch (err) {
+    } catch (_err) {
       setError('Ошибка при проверке поставщика');
     } finally {
       setIsChecking(false);
@@ -113,9 +118,24 @@ const SupplierCheckSection: React.FC<SupplierCheckSectionProps> = ({ onCheck }) 
                         {registry.last_name} {registry.first_name} {registry.middle_name}
                       </div>
                     )}
-                    <div className={styles.registryType}>
-                      Реестр: {registry.source_registry}
-                    </div>
+
+                    {registry.reason_text && (
+                      <div className={styles.reasonBlock}>
+                        <div className={styles.reasonLabel}>
+                          Причина включения в реестр:
+                        </div>
+                        <div className={styles.reasonText}>
+                          {registry.reason_text}
+                        </div>
+                      </div>
+                    )}
+
+                    {registry.legal_address && (
+                      <div className={styles.registryInfo}>
+                        <strong>Адрес:</strong> {registry.legal_address}
+                      </div>
+                    )}
+
                     {registry.specialty_description && (
                       <div className={styles.registryDescription}>
                         {registry.specialty_description}

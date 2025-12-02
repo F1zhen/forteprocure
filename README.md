@@ -1,4 +1,4 @@
-# Forte Procure AI  
+# Forte Procure AI
 **Intelligent Tender Analysis & Risk Detection Platform**
 
 <img width="1900" height="1028" alt="image" src="https://github.com/user-attachments/assets/aa4951ef-9dd2-4928-bcbd-6a8739388319" />
@@ -7,7 +7,7 @@
 ---
 
 ### The purpose
-Automatically parses tender documents, extracts key terms, detects risks, finds similar tenders, and matches qualified suppliers — in seconds.
+Automatically parses tender documents, extracts key terms, detects risks, finds similar tenders, and matches qualified suppliers - everything in one place, in seconds
 
 ---
 

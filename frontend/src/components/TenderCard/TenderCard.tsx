@@ -27,6 +27,18 @@ const TenderCard: React.FC<TenderCardProps> = ({ tender, onClick }) => {
     return <span className={`${styles.riskBadge} ${className}`}>{label}</span>;
   };
 
+  const formatDate = (dateString: string | null | undefined): string => {
+    if (!dateString) return 'Дата не указана';
+
+    const date = new Date(dateString);
+
+    if (isNaN(date.getTime()) || date.getTime() === 0 || date.getFullYear() < 2000) {
+      return 'Дата не указана';
+    }
+
+    return date.toLocaleDateString('ru-RU');
+  };
+
   return (
     <div className={styles.card} onClick={onClick}>
       <div className={styles.header}>
@@ -46,7 +58,7 @@ const TenderCard: React.FC<TenderCardProps> = ({ tender, onClick }) => {
           {(tender.total_sum / 1000000).toFixed(1)} млн ₸
         </div>
         <div className={styles.date}>
-          {new Date(tender.publish_date).toLocaleDateString('ru-RU')}
+          {formatDate(tender.publish_date)}
         </div>
       </div>
 

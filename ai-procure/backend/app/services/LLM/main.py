@@ -4,6 +4,7 @@ import json
 from typing import Any, Dict, Optional
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Query
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from dotenv import load_dotenv
@@ -20,7 +21,7 @@ def generate_announce_number() -> str:
     # Можно как угодно, главное — не NULL
     return f"AI-{int(time.time())}-{uuid.uuid4().hex[:6]}"
 
-#НИЦИАЛИЗАЦИЯ
+#ИНИЦИАЛИЗАЦИЯ
 
 load_dotenv()
 API_KEY = os.environ.get("GEMINI_API_KEY")
@@ -44,6 +45,13 @@ app = FastAPI(
     version="0.1.0",
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 #МОДЕЛИ ОТВЕТ
 class AnalyzeTenderResponse(BaseModel):
@@ -240,14 +248,25 @@ def save_analysis_to_db(tender_id: Optional[int], analysis: Dict[str, Any]) -> i
     if not announce_number:
         announce_number = generate_announce_number()
 
+    deadline_str = key.get("deadline", "")
+    publish_date = None
+
+    if deadline_str:
+        import dateutil.parser
+        try:
+            publish_date = dateutil.parser.parse(deadline_str, dayfirst=True)
+        except:
+            pass
+
     base_data = {
-        "announce_number": announce_number,              # 🔴 ДОБАВИЛИ
+        "announce_number": announce_number,
         "name": key.get("title", ""),
         "organizer_name": key.get("customer", ""),
         "total_sum": parse_budget_to_float(key.get("budget", "")),
         "risk_score": compute_risk_score(analysis),
         "ml_analysis_text": json.dumps(analysis, ensure_ascii=False),
         "is_analyzed": True,
+        "publish_date": publish_date,
     }
 
     if tender_id is None:

@@ -221,7 +221,16 @@ async def get_complete_analysis(tender_id: int):
                 "/similar-tenders",
                 {"tender_id": tender_id, "top_k": 5}
             )
-            similar_tenders = similar_data.get("items", [])
+
+            for item in similar_data.get("items", []):
+                tender_result = supabase.table("tenders") \
+                    .select("*") \
+                    .eq("id", item["tender_id"]) \
+                    .execute()
+
+                if tender_result.data:
+                    similar_tenders.append(tender_result.data[0])
+
         except Exception as e:
             print(f"Error fetching similar tenders: {e}")
 
@@ -304,19 +313,48 @@ async def check_supplier_risk_endpoint(bin_number: str):
     try:
         is_risky = check_supplier_risk(bin_number)
 
+        # Получаем детали с полной информацией
         details = supabase.table("registry_entries") \
             .select("*") \
             .eq("external_id", bin_number) \
             .execute()
 
+        # Extract additional info from raw_data
+        enhanced_details = []
+        for entry in details.data:
+            raw = entry.get("raw_data", {}) or {}
+
+            # Extract reason details
+            reason_obj = raw.get("reason", {})
+            reason_text = None
+            if isinstance(reason_obj, dict):
+                reason_text = reason_obj.get("ru") or reason_obj.get("kk")
+
+            enhanced_entry = {
+                "id": entry.get("id"),
+                "source_registry": entry.get("source_registry"),
+                "general_name": entry.get("general_name"),
+                "first_name": entry.get("first_name"),
+                "last_name": entry.get("last_name"),
+                "middle_name": entry.get("middle_name"),
+                "external_id": entry.get("external_id"),
+                "specialty_description": entry.get("specialty_description"),
+                # Additional details from raw_data
+                "reason_code": reason_obj.get("code") if isinstance(reason_obj, dict) else None,
+                "reason_text": reason_text,
+                "email_address": raw.get("emailAddress"),
+                "legal_address": raw.get("legalAddress"),
+                "register_type": raw.get("registerType"),
+            }
+            enhanced_details.append(enhanced_entry)
+
         return {
             "bin": bin_number,
             "is_risky": is_risky,
-            "registries": details.data
+            "registries": enhanced_details
         }
     except Exception as e:
         raise HTTPException(500, detail=str(e))
-
 
 @app.get("/api/stats")
 async def get_statistics():

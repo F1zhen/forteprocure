@@ -26,7 +26,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading }) => {
     <div className={styles.searchSection}>
       <div className={styles.searchGrid}>
         <div className={styles.inputWrapper}>
-          <label className={styles.label}>Ключевые слова</label>
+          <label className={styles.label}>Поиск</label>
           <input
             type="text"
             value={keyword}

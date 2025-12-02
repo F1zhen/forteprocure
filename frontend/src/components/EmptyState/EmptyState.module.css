@@ -5,9 +5,12 @@
   padding: 20px 0;
 }
 
+.leftColumn,
+.rightColumn {
+  min-height: 300px;
+}
+
 .card {
-  text-align: center;
-  padding: 60px 40px;
   background: #F9FAFB;
   border-radius: 12px;
   min-height: 300px;
@@ -15,6 +18,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  padding: 40px;
 }
 
 .icon {
@@ -35,18 +39,16 @@
   color: #666;
   line-height: 1.6;
   max-width: 300px;
+  text-align: center;
 }
 
 .loadingState {
-  background: #F9FAFB;
-  border-radius: 12px;
-  padding: 60px 40px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 20px;
-  min-height: 300px;
+  width: 100%;
 }
 
 .spinner {
@@ -73,6 +75,7 @@
   background: #F9FAFB;
   border-radius: 12px;
   padding: 24px;
+  min-height: 300px;
 }
 
 .resultsHeader {
@@ -114,7 +117,7 @@
   background: #F9FAFB;
   border-radius: 12px;
   padding: 24px;
-  max-height: 600px;
+  max-height: 700px;
   overflow-y: auto;
 }
 
